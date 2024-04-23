@@ -64,14 +64,16 @@ void setup() {
   Serial.println(ip);
 
   server.begin();
+
 }
 
 //SENDING FUNCTION
 void SendToApp(WiFiClient client)
 {
-  char buffer[10000]; // Utwórz bufor o odpowiednim rozmiarze
+  char buffer[1000]; // Utwórz bufor o odpowiednim rozmiarze
   sprintf(buffer, "*%d;%d;%d;%d;%.2f;%.2f;%.2f;%.2f;%.2f;%.2f;%d;%d#", rpm_m1, rpm_m2, rpm_m3, rpm_m4, current_m1, current_m2, current_m3, ambient_temperature, battery_temperature, voltage);
-  client.print(buffer);
+  //client.println("elo");
+  client.println(buffer);
 }
 
 //SERIAL PRINT VALUES
@@ -102,13 +104,16 @@ void SensorsSerialPrint()
 }
 
 
-
 //MAIN LOOP
 void loop() 
 {
+  WiFiClient client = server.available();   // Oczekuj na klienta
+  if (client) {                             
+    Serial.println("Nowy klient");                     
+    while (client.connected()) {                      
       unsigned long currentTime = millis();
       unsigned long elapsedTime = currentTime - prevTime;
-      
+      /*
       if (elapsedTime >= measuring_frequency) 
       {
         if (loop_iterations = rpm_counting_frequency)
@@ -117,12 +122,13 @@ void loop()
           rpm_m2 = (count_m2) * (60000.0 / elapsedTime); // Calculate RPM
           rpm_m3 = (count_m3) * (60000.0 / elapsedTime); // Calculate RPM
           rpm_m4 = (count_m4) * (60000.0 / elapsedTime); // Calculate RPM
-          //Serial.print("LICZENIE RPM\n");
-          count_m1 += 1;
-          count_m2 += 1;    //Zamieniłem z = 0, na += 1 na potrzeby testów 
-          count_m3 += 1;
-          count_m4 += 1;
+          Serial.print("LICZENIE RPM\n");
+          count_m1 = 0;
+          count_m2 = 0;    //Zamieniłem z = 0, na += 1 na potrzeby testów 
+          count_m3 = 0;
+          count_m4 = 0;
         }
+        /*
   /*
         //CURRENT SENSING
         current_m1 = RNG(current);
@@ -137,7 +143,7 @@ void loop()
         //VOLTAGE SENSING
         voltage = RNG(voltage);
 */
-        prevTime = currentTime; // Update previous time
+        //prevTime = currentTime; // Update previous time
         //Serial.print("LOOP\n");
         //SensorsSerialPrint();
 
@@ -145,5 +151,9 @@ void loop()
 
         loop_iterations = loop_iterations + 1;
         delay(1);
-      }
+      //}
+    }
+    //client.stop();
+    Serial.println("Klient rozłączony");
+  }
 }
