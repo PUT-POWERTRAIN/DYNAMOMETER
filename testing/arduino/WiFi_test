@@ -8,7 +8,7 @@ WiFiServer server(12345);
 void setup()
 {
   Serial.begin(115200);
-  delay(3000);
+  delay(1000);
 
   // Połącz z siecią WiFi
   Serial.println();
@@ -36,13 +36,12 @@ void loop()
   WiFiClient client = server.available();   // Oczekuj na klienta
   if (client) {                             
     Serial.println("Nowy klient");                     
-    while (client.connected()) {            
-      if (client.available()) {             
+    while (client.connected()) {                      
         delay(300);
-        Serial.print("Polaczono");                
-      }
+        Serial.println("polaczenie");
+        client.println("elo");        
     }
-    client.stop();
+    //client.stop();
     Serial.println("Klient rozłączony");
   }
 }
