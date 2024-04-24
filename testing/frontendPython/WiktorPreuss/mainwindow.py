@@ -12,6 +12,48 @@ from PySide6.QtCore import Qt
 #     pyside2-uic form.ui -o ui_form.py
 from ui_form import Ui_MainWindow
 
+class Translation(QMainWindow):
+        @staticmethod
+        def translateToPolish(ui):
+            ui.tabWidget.setTabText(0, "Pomiar")
+            ui.tabWidget.setTabText(1, "Łączenie")
+            ui.tabWidget.setTabText(2, "Badanie")
+            ui.tabWidget.setTabText(3, "Ustawienia")
+
+            ui.LanguageLabel.setText("Język")
+            ui.ThemeLabel.setText("Motyw")
+            ui.FontLabel.setText("Czcionka")
+            ui.FontSizeLabel.setText("Rozmiar")
+            ui.MotorLimitLabel.setText("Limit Ciągu")
+
+            ui.SaveSettingsButton.setText("Zapisz")
+            ui.DefaultSettingsButton.setText("Domyślne")
+            ui.GeneralSettingsGroupBox.setTitle("Głowne Ustawienia")
+            ui.FontSettingsGroupBox.setTitle("Ustawienia Czcionki")
+            ui.ConnectionSettingsGroupBox.setTitle("Ustawienia Połączenia")
+            ui.MotorSettingsGroupBox.setTitle("Ustawienia Kontroli Silników")
+
+        @staticmethod
+        def translateToEnglish(ui):
+            ui.tabWidget.setTabText(0, "Main")
+            ui.tabWidget.setTabText(1, "Connection")
+            ui.tabWidget.setTabText(2, "Analysis")
+            ui.tabWidget.setTabText(3, "Settings")
+
+            ui.LanguageLabel.setText("Language")
+            ui.ThemeLabel.setText("Theme")
+            ui.FontLabel.setText("Font")
+            ui.FontSizeLabel.setText("Font Size")
+            ui.MotorLimitLabel.setText("Motor Limit")
+
+            ui.SaveSettingsButton.setText("Save")
+            ui.DefaultSettingsButton.setText("Default")
+            ui.GeneralSettingsGroupBox.setTitle("Main Settings")
+            ui.FontSettingsGroupBox.setTitle("Font Settings")
+            ui.ConnectionSettingsGroupBox.setTitle("Connection Settings")
+            ui.MotorSettingsGroupBox.setTitle("Motor Control Settings")
+
+
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -28,25 +70,28 @@ class MainWindow(QMainWindow):
             else:
                 self.close()
 
-        self.ui.exitButton.clicked.connect(exit_function)
-
-        #TRANSLATION
-        def transolationFunction():
+        def save_settings_function():
             if self.ui.LanguageBox.currentIndex() == 0:
-                self.ui.tabWidget.setTabText(0, "Pomiar")
-                self.ui.tabWidget.setTabText(1, "Łączenie")
-                self.ui.tabWidget.setTabText(2, "Badanie")
-                self.ui.tabWidget.setTabText(3, "Ustawienia")
+                Translation.translateToPolish(self.ui)
             elif self.ui.LanguageBox.currentIndex() == 1:
-                self.ui.tabWidget.setTabText(0, "Main")
-                self.ui.tabWidget.setTabText(1, "Connection")
-                self.ui.tabWidget.setTabText(2, "Analysis")
-                self.ui.tabWidget.setTabText(3, "Settings")
+                Translation.translateToEnglish(self.ui)
 
-        self.ui.LanguageBox.currentIndexChanged.connect(transolationFunction)
+        def default_settings_function():
+            self.ui.LanguageBox.setCurrentIndex(1)
+            self.ui.ThemeBox.setCurrentIndex(0)
+            self.ui.FontSizeBox.setCurrentIndex(1)
+            self.ui.FontComboBox.setCurrentIndex(0)
+            self.ui.IPBox.setCurrentIndex(0)
+            self.ui.PortBox.setCurrentIndex(0)
+            self.ui.MotorLimitBox.setCurrentIndex(3)
+            save_settings_function()
+
+
+        self.ui.exitButton.clicked.connect(exit_function)
+        self.ui.SaveSettingsButton.clicked.connect(save_settings_function)
+        self.ui.DefaultSettingsButton.clicked.connect(default_settings_function)
+
         self.ui.LanguageBox.setCurrentIndex(1)
-
-
 
         #BORDERLESS
         self.setWindowFlags(Qt.FramelessWindowHint)
