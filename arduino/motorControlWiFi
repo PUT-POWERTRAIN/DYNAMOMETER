@@ -1,0 +1,102 @@
+// WIKTOR PREUSS
+// PUT POWERTRAIN 2024
+// WIFI MOTOR CONTROL
+// FOR ARDUINO UNO R4
+#include <WiFi.h>
+#include <WiFiUdp.h>
+#include <Servo.h>
+
+const char *ssid = "TP-Link_33DD";
+const char *password = "03215111";
+
+WiFiUDP udp;
+unsigned int localUdpPort = 12345;
+
+const int pinMotor1 = 11; 
+const int pinMotor2 = 6; 
+const int pinMotor3 = 9;  
+const int pinMotor4 = 5;  
+char packetBuffer[255]; 
+Servo esc_motor1, esc_motor2, esc_motor3, esc_motor4;
+int pwmValueForMotor1, pwmValueForMotor2, pwmValueForMotor3, pwmValueForMotor4 = 0;
+int speed = 0;
+int packetSize = 0;
+int messageLength = 0;
+
+void connectToWiFi();
+void setupUDP();
+void setupEsc();
+void getUdpMessage();
+void controlMotors();
+void printValues();
+
+void setup() {
+  Serial.begin(115200);
+  connectToWiFi();
+  setupUDP();
+  setupEsc();
+}
+
+void loop() {
+  getUdpMessage();
+  //printValues();
+  controlMotors();
+  yield();
+}
+
+void connectToWiFi(){
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+}
+
+void setupUDP(){
+  udp.begin(localUdpPort);
+  Serial.print("UDP server started at port ");
+  Serial.println(localUdpPort);
+}
+
+void setupEsc(){
+  esc_motor1.attach(pinMotor1);
+  esc_motor2.attach(pinMotor2);
+  esc_motor3.attach(pinMotor3);
+  esc_motor4.attach(pinMotor4);
+}
+
+void getUdpMessage(){
+  int packetSize = udp.parsePacket();
+    if (packetSize) {
+      int messageLength = udp.read(packetBuffer, 255);
+      if (messageLength > 0) {
+        packetBuffer[messageLength] = 0;
+        Serial.print("Received packet: ");
+        Serial.println(packetBuffer);
+        sscanf(packetBuffer, "%d;%d;%d;%d", &pwmValueForMotor1, &pwmValueForMotor2, &pwmValueForMotor3, &pwmValueForMotor4);
+      }
+    }
+}
+
+void controlMotors() {
+  esc_motor1.writeMicroseconds(pwmValueForMotor1);
+  esc_motor2.writeMicroseconds(pwmValueForMotor2);
+  esc_motor3.writeMicroseconds(pwmValueForMotor3);
+  esc_motor4.writeMicroseconds(pwmValueForMotor4);
+}
+
+void printValues(){
+  Serial.print("m1:");
+  Serial.print(pwmValueForMotor1);
+  Serial.print(";");
+  Serial.print("m2:");
+  Serial.print(pwmValueForMotor2);
+  Serial.print(";");
+  Serial.print("m3:");
+  Serial.print(pwmValueForMotor3);
+  Serial.print(";");
+  Serial.print("m4:");
+  Serial.println(pwmValueForMotor4);
+}
+
