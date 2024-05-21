@@ -8,8 +8,7 @@
 #include <QTextBrowser>
 #include <vector>
 #include "SpeedMeter.h"
-
-
+#include "connection.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -43,10 +42,19 @@ private:
     void setTextColorInTextBrowsers(QColor color);
     bool recordingData = false;
     void setButtonState(std::string command);
+    void sendUdpMessage();
+    //Wiktor Klój
+    void onSliderValueChanged_slider_motor_1(int value);
+    void onSliderValueChanged_slider_motor_2(int value);
+    void onSliderValueChanged_slider_motor_3(int value);
+    void onSliderValueChanged_slider_motor_4(int value);
+    void onSliderValueChanged_slider_allmotors(int value);
+    //
     SpeedMeter *speedmeterLeftUp;
     SpeedMeter *speedmeterLeftDown;
     SpeedMeter *speedmeterRightUp;
     SpeedMeter *speedmeterRightDown;
+    Connection *connecting;
     std::vector<int> rpmVector_m1 = {1000, 2000, 3000};
     std::vector<int> rpmVector_m2 = {1000, 2000, 3000};
     std::vector<int> rpmVector_m3 = {1000, 2000, 3000};
@@ -59,7 +67,6 @@ private:
     std::vector<int> batteryTemperature = {40, 41, 42, 43};
     std::array<QTextBrowser*, 10> textBrowsers;
     std::array<std::vector<int>*, 10> dataArray = {&rpmVector_m1, &rpmVector_m2, &rpmVector_m3, &rpmVector_m4, &currentVector_m1, &currentVector_m2, &currentVector_m3, &currentVector_m4, &ambientTemperature, &batteryTemperature};
-
 
 };
 #endif // MAINWINDOW_H

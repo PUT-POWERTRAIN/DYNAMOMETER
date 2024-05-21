@@ -12,6 +12,12 @@
 #include <QPaintEvent>
 #include <QPalette>
 
+#include <iostream>
+#include <string>
+#include <Winsock2.h>
+#include <Ws2tcpip.h>
+#pragma comment(lib, "Ws2_32.lib") // Łączenie z biblioteką Winsock
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -22,11 +28,64 @@ MainWindow::MainWindow(QWidget *parent)
     setupTheme();
     setupWidgets();
     setupButtons();
-    //speedmeterLeftDown->simulation(100,100);
-    //speedmeterLeftUp->simulation(100,100);
-    //speedmeterRightDown->simulation(100,100);
-    //speedmeterRightUp->simulation(100,100);
+
+    QPixmap pixmap("C://User//Vest3//OneDrive//Pulpit//EV Drone.png");
+    ui->label->setPixmap(pixmap);
+    ui->label->show();
+    ui->label->setFixedSize(pixmap.width()/8, pixmap.height()/8);
+    //ui->label->setGeometry(10, 10, pixmap.width()/8, pixmap.height()/8);
+
+
+
+    speedmeterLeftDown->simulation(20,10);
+    speedmeterLeftUp->simulation(20,10);
+    speedmeterRightDown->simulation(20,10);
+    speedmeterRightUp->simulation(20,10);
+
+
+
+
+
+    //speedmeterLeftDown->setCurrentArcLength(60);
+    //speedmeterLeftUp->setCurrentArcLength(60);
+    //speedmeterRightDown->setCurrentArcLength(60);
+    //speedmeterRightUp->setCurrentArcLength(60);
+    //speedmeterLeftDown->setRpmArcLength(80);
+    //speedmeterLeftUp->setRpmArcLength(80);
+    //speedmeterRightDown->setRpmArcLength(80);
+    //speedmeterRightUp->setRpmArcLength(80);
+
+
 }
+
+void MainWindow::onSliderValueChanged_slider_allmotors(int sliderValue) {
+    connecting->motorSignalChangeTo(sliderValue,0);
+    connecting->motorSignalChangeTo(sliderValue,1);
+    connecting->motorSignalChangeTo(sliderValue,2);
+    connecting->motorSignalChangeTo(sliderValue,3);
+}
+void MainWindow::onSliderValueChanged_slider_motor_1(int sliderValue){
+    connecting->motorSignalChangeTo(sliderValue,0);
+}
+
+void MainWindow::onSliderValueChanged_slider_motor_2(int sliderValue){
+    connecting->motorSignalChangeTo(sliderValue,1);
+}
+
+void MainWindow::onSliderValueChanged_slider_motor_3(int sliderValue){
+    connecting->motorSignalChangeTo(sliderValue,2);
+}
+
+void MainWindow::onSliderValueChanged_slider_motor_4(int sliderValue){
+    connecting->motorSignalChangeTo(sliderValue,3);
+}
+
+
+
+
+
+
+
 
 void MainWindow::setupTheme(){
     QLinearGradient gradient(0, 0, 0, height());
@@ -54,6 +113,13 @@ void MainWindow::setupButtons(){
     connect(ui->resetDataButton, &QPushButton::clicked, this, &MainWindow::UpdateMeasurments);
     connect(ui->clearLogBoxButton, &QPushButton::clicked, this, &MainWindow::clearTextBoxes);
     connect(ui->recordDataButton, &QPushButton::clicked, this, &MainWindow::recordData);
+
+    connect(ui->motorAllSlider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_allmotors);
+    connect(ui->motor1Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_1);
+    connect(ui->motor2Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_2);
+    connect(ui->motor3Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_3);
+    connect(ui->motor4Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_4);
+
 }
 
 void MainWindow::setupDataHandling(){
@@ -74,6 +140,8 @@ void MainWindow::setupWidgets(){
     speedmeterLeftDown = new SpeedMeter(this);
     speedmeterRightUp = new SpeedMeter(this);
     speedmeterRightDown = new SpeedMeter(this);
+
+    connecting = new Connection();
 
 
     ui->gridLayout_main->addWidget(speedmeterLeftUp, 0, 0);
