@@ -31,6 +31,7 @@ private:
     void onAnimationValueChanged2(const QVariant &value);
     void increaseValues();
 
+
     QTimer *ptimer;
     QPropertyAnimation *animation = nullptr;
     QPropertyAnimation *animation2 = nullptr;

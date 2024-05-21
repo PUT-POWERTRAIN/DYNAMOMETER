@@ -34,7 +34,7 @@ void SpeedMeter::rpm_labelSetup(QFont label_font, QFont label_font_static){
 
     LabelRPM_static->setText("rpm");
     LabelRPM_static->setFont(label_font_static);
-    LabelRPM_static->move(0, height() * 63/100);
+    LabelRPM_static->move(0, height() * 65/100);
 }
 
 void SpeedMeter::current_labelSetup(QFont label_font, QFont label_font_static){
@@ -47,7 +47,7 @@ void SpeedMeter::current_labelSetup(QFont label_font, QFont label_font_static){
 
     LabelCURRENT_static->setText("A");
     LabelCURRENT_static->setFont(label_font_static);
-    LabelCURRENT_static->move(40, height() * 63/100);
+    LabelCURRENT_static->move(40, height() * 65/100);
 }
 
 void SpeedMeter::simulation(int value, int timeStep){
