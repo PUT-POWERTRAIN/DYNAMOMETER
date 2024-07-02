@@ -1,0 +1,336 @@
+//Wiktor Preuss 2024
+// For PUT Powertrain
+//Alpha Bulid
+#include "mainwindow.h"
+#include "./ui_mainwindow.h"
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <string>
+#include <QPixmap>
+#include<QPainter>
+#include <QPaintEvent>
+#include <QPalette>
+#include <QLabel>
+
+#include <iostream>
+#include <string>
+#include <Winsock2.h>
+#include <Ws2tcpip.h>
+#pragma comment(lib, "Ws2_32.lib") // Łączenie z biblioteką Winsock
+
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    setupDataHandling();
+    setupTheme();
+    setupWidgets();
+    setupButtons();
+    setupMeasuringLoop();
+
+
+    //speedmeterLeftDown->simulation(20,300);
+    //speedmeterLeftUp->simulation(20,500);
+    //speedmeterRightDown->simulation(20,500);
+    //speedmeterRightUp->simulation(20,300);
+
+
+
+    //speedmeterLeftDown->setCurrentArcLength(60);
+    //speedmeterLeftUp->setCurrentArcLength(60);
+    //speedmeterRightDown->setCurrentArcLength(60);
+    //speedmeterRightUp->setCurrentArcLength(60);
+    //speedmeterLeftDown->setRpmArcLength(80);
+    //speedmeterLeftUp->setRpmArcLength(80);
+    //speedmeterRightDown->setRpmArcLength(80);
+    //speedmeterRightUp->setRpmArcLength(80);
+
+
+}
+
+
+void MainWindow::setupTheme(){
+    /*
+    ui->line_4->setStyleSheet("background-color: transparent;");
+    ui->line_5->setStyleSheet("background-color: transparent;");
+    ui->line_6->setStyleSheet("background-color: transparent;");
+    ui->line_7->setStyleSheet("background-color: transparent;");
+    ui->line_8->setStyleSheet("background-color: transparent;");
+    ui->line_9->setStyleSheet("background-color: transparent;");
+    ui->line_10->setStyleSheet("background-color: transparent;");
+    ui->line_11->setStyleSheet("background-color: transparent;");
+    ui->line_12->setStyleSheet("background-color: transparent;");
+    ui->line_13->setStyleSheet("background-color: transparent;");
+*/
+    QLinearGradient gradient(0, 0, 0, height());
+    QColor color = ("#050317");
+    gradient.setColorAt(0, color);
+    color = ("#090C38");
+    gradient.setColorAt(0.5, color);
+    color = ("#050317");
+    gradient.setColorAt(1, color);
+    QPalette palette;
+    //palette.setBrush(QPalette::Window, gradient);
+    //palette.setBrush(QPalette::Base, gradient);
+    //palette.setBrush(QPalette::AlternateBase, gradient);
+    setPalette(palette);
+    ui->textBrowser_console->setPalette(palette);
+    ui->textBrowser_console->setStyleSheet("QTextBrowser { background: transparent;}");
+    for (QTextBrowser* textBrowser : this->textBrowsers)
+    {
+        textBrowser->setStyleSheet("QTextBrowser { background: transparent;}");
+    }
+}
+
+void MainWindow::setupButtons(){
+    connect(ui->exportDataButton, &QPushButton::clicked, this, &MainWindow::saveToCSV);
+    connect(ui->resetDataButton, &QPushButton::clicked, this, &MainWindow::UpdateMeasurments);
+    connect(ui->clearLogBoxButton, &QPushButton::clicked, this, &MainWindow::clearTextBoxes);
+    connect(ui->recordDataButton, &QPushButton::clicked, this, &MainWindow::recordData);
+    connect(ui->slidersButton, &QPushButton::clicked, this, &MainWindow::slidersButtonFunction);
+    connect(ui->saveSettingsButton, &QPushButton::clicked, this, &MainWindow::saveSettingsButtonFunction);
+
+    connect(ui->motor1Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_1);
+    connect(ui->motor2Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_2);
+    connect(ui->motor3Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_3);
+    connect(ui->motor4Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_4);
+}
+
+void MainWindow::saveSettingsButtonFunction(){
+    int selectedValue = ui->maxMotorSignalBox->currentText().toInt();
+    ui->motor1Slider->setMaximum(selectedValue);
+    ui->motor2Slider->setMaximum(selectedValue);
+    ui->motor3Slider->setMaximum(selectedValue);
+    ui->motor4Slider->setMaximum(selectedValue);
+}
+
+void MainWindow::slidersButtonFunction(){
+    if (slidersConnected == true){
+        slidersSeparate();
+        this->slidersConnected = false;
+        ui->slidersButton->setText("Razem");
+    }
+    else{
+        slidersTogether();
+        this->slidersConnected = true;
+        ui->slidersButton->setText("Osobno");
+    }
+}
+
+void MainWindow::setupMeasuringLoop(){
+    loopTimer = new QTimer(this);
+    connect(loopTimer, &QTimer::timeout, this, &MainWindow::getData);
+    loopTimer->start(100);
+}
+
+void MainWindow::getData(){
+    connecting->receiveUdpMessage();
+    rpmVector_m1.push_back(connecting->motor1_rpm);
+    //speedmeterLeftUp->update(50, 0);
+    //speedmeterLeftUp->update(20,0);
+    //speedmeterLeftUp->update(100,0);
+    //speedmeterLeftUp->setRpmArcLength((rpmVector_m1.back()/4000)*100);
+    showDataInLogBox();
+}
+
+void MainWindow::slidersTogether(){
+    disconnect(ui->motor1Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_1);
+    disconnect(ui->motor2Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_2);
+    disconnect(ui->motor3Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_3);
+    disconnect(ui->motor4Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_4);
+    connect(ui->motor1Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_allmotors);
+    connect(ui->motor2Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_allmotors);
+    connect(ui->motor3Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_allmotors);
+    connect(ui->motor4Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_allmotors);
+}
+
+void MainWindow::slidersSeparate(){
+    disconnect(ui->motor1Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_allmotors);
+    disconnect(ui->motor2Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_allmotors);
+    disconnect(ui->motor3Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_allmotors);
+    disconnect(ui->motor4Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_allmotors);
+    connect(ui->motor1Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_1);
+    connect(ui->motor2Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_2);
+    connect(ui->motor3Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_3);
+    connect(ui->motor4Slider , &QSlider::valueChanged, this, &MainWindow::onSliderValueChanged_slider_motor_4);
+}
+
+void MainWindow::onSliderValueChanged_slider_allmotors(int sliderValue) {
+    ui->motor1Slider->setValue(sliderValue);
+    ui->motor2Slider->setValue(sliderValue);
+    ui->motor3Slider->setValue(sliderValue);
+    ui->motor4Slider->setValue(sliderValue);
+
+    connecting->motorSignalChangeTo(sliderValue,0);
+    connecting->motorSignalChangeTo(sliderValue,1);
+    connecting->motorSignalChangeTo(sliderValue,2);
+    connecting->motorSignalChangeTo(sliderValue,3);
+
+    QString newText = QString::number(sliderValue) + "%";
+    setMotorControlLabel(ui->motor1ControlLabel, sliderValue);
+    setMotorControlLabel(ui->motor2ControlLabel, sliderValue);
+    setMotorControlLabel(ui->motor3ControlLabel, sliderValue);
+    setMotorControlLabel(ui->motor4ControlLabel, sliderValue);
+
+}
+
+void MainWindow::setMotorControlLabel(QLabel *label, int sliderValue){
+    QString newText = QString::number(sliderValue) + "%";
+    label->setText(newText);
+}
+
+void MainWindow::onSliderValueChanged_slider_motor_1(int sliderValue){
+    connecting->motorSignalChangeTo(sliderValue,0);
+    setMotorControlLabel(ui->motor1ControlLabel, sliderValue);
+}
+
+void MainWindow::onSliderValueChanged_slider_motor_2(int sliderValue){
+    connecting->motorSignalChangeTo(sliderValue,1);
+    setMotorControlLabel(ui->motor2ControlLabel, sliderValue);
+}
+
+void MainWindow::onSliderValueChanged_slider_motor_3(int sliderValue){
+    connecting->motorSignalChangeTo(sliderValue,2);
+    setMotorControlLabel(ui->motor3ControlLabel, sliderValue);
+}
+
+void MainWindow::onSliderValueChanged_slider_motor_4(int sliderValue){
+    connecting->motorSignalChangeTo(sliderValue,3);
+    QString newText = QString::number(sliderValue) + "%";
+    setMotorControlLabel(ui->motor4ControlLabel, sliderValue);
+}
+
+void MainWindow::setupDataHandling(){
+    textBrowsers={ui->textBrowser_rpm_m1,
+                    ui->textBrowser_rpm_m2,
+                    ui->textBrowser_rpm_m3,
+                    ui->textBrowser_rpm_m4,
+                    ui->textBrowser_current_m1,
+                    ui->textBrowser_current_m2,
+                    ui->textBrowser_current_m3,
+                    ui->textBrowser_current_m4,
+                    ui->textBrowser_ambient_temperature,
+                    ui->textBrowser_battery_temperature};
+}
+
+void MainWindow::setupWidgets(){
+    speedmeterLeftUp = new SpeedMeter(this);
+    speedmeterLeftDown = new SpeedMeter(this);
+    speedmeterRightUp = new SpeedMeter(this);
+    speedmeterRightDown = new SpeedMeter(this);
+    connecting = new Connection();
+
+
+    ui->gridLayout_main->addWidget(speedmeterLeftUp, 0, 0);
+    ui->gridLayout_main->addWidget(speedmeterRightUp, 0, 2);
+    ui->gridLayout_main->addWidget(ui->line, 0, 1);
+    ui->gridLayout_main->addWidget(ui->line_2, 1, 1);
+    ui->gridLayout_main->addWidget(speedmeterLeftDown, 1, 0);
+    ui->gridLayout_main->addWidget(speedmeterRightDown, 1, 2);
+}
+
+void MainWindow::clearTextBoxes()
+{
+    for (QTextBrowser* textBrowser : this->textBrowsers)
+        {
+            textBrowser->clear();
+        }
+}
+
+void MainWindow::resetData()
+{
+    for (std::vector<int>* vector : dataArray) {
+        vector->clear();
+    }
+}
+
+void MainWindow::UpdateMeasurments(){
+    showDataInLogBox();
+    showDataInConsole();
+}
+
+void MainWindow::showDataInLogBox()
+{
+    ui->textBrowser_rpm_m1->append(QString::number(rpmVector_m1.back()));
+    ui->textBrowser_rpm_m2->append(QString::number(rpmVector_m2.back()));
+    ui->textBrowser_rpm_m3->append(QString::number(rpmVector_m3.back()));
+    ui->textBrowser_rpm_m4->append(QString::number(rpmVector_m4.back()));
+    ui->textBrowser_current_m1->append(QString::number(currentVector_m1.back()));
+    ui->textBrowser_current_m2->append(QString::number(currentVector_m2.back()));
+    ui->textBrowser_current_m3->append(QString::number(currentVector_m3.back()));
+    ui->textBrowser_current_m4->append(QString::number(currentVector_m4.back()));
+    ui->textBrowser_ambient_temperature->append(QString::number(ambientTemperature.back()) + "°C");
+    ui->textBrowser_battery_temperature->append(QString::number(batteryTemperature.back()) + "°C");
+}
+
+void MainWindow::showDataInConsole(){
+    ui->textBrowser_console->append(QString::number(rpmVector_m1.back()));
+}
+
+void MainWindow::recordData()
+{
+    if (recordingData == false)
+    {
+        setTextColorInTextBrowsers("green");
+        setButtonState("Stop");
+        recordingData = true;
+    }
+    else
+    {
+        setTextColorInTextBrowsers("white");
+        setButtonState("Nagrywaj");
+        recordingData = false;
+    }
+}
+
+void MainWindow::setButtonState(std::string command) {
+    if (command != "Stop" && command != "Nagrywaj") {
+        return;
+    }
+    else if (command == "Stop") {
+        ui->recordDataButton->setPalette(QPalette(Qt::darkRed));
+        ui->recordDataButton->setText("Stop");
+    }
+    else {
+        ui->recordDataButton->setPalette(QPalette(Qt::darkGreen));
+        ui->recordDataButton->setText("Nagrywaj");
+    }
+}
+
+void MainWindow::setTextColorInTextBrowsers(QColor color){
+    for (QTextBrowser* textBrowser : this->textBrowsers)
+    {
+        textBrowser->setTextColor(color);
+    }
+}
+
+std::string filename = "xd";
+
+void MainWindow::saveToCSV()
+{
+    std::ofstream file(filename);
+
+    file << "RPM_M1;RPM_M2;RPM_M3;RPM_M4;I_M1;I_M2;I_M3;I_M4;AMBNT_TEMP;BATT_TEMP;";
+    file << std::endl;
+    file << "[obr/min];[obr/min];[obr/min];[obr/min];[A];[A];[A];[A];[C];[C];";
+    file << std::endl;
+
+    for (int i = 0; i < (dataArray[0]->size()); i++)
+    {
+        for (std::vector<int>* vector : dataArray) {
+            file << (*vector)[i];
+            file << ";";
+        }
+        file << std::endl;
+    }
+
+    file.close();
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
