@@ -1,0 +1,69 @@
+1. Tworzenie klasy:
+w qt creator stworzyć klasę cpp, która będzie obsługiwała sygnał
+przykład: 
+-----------------------------------------
+myClass.h
+
+#ifndef MYCLASS_H
+#define MYCLASS_H
+
+#include <QObject>
+
+class myClass : public QObject
+{
+    Q_OBJECT
+public:
+    explicit myClass(QObject *parent = nullptr);
+
+public slots:
+    void onButtonClicked();
+};
+
+#endif // MYCLASS_H
+-----------------------------------------
+myClass.cpp
+
+#include "myClass.h"
+#include <QDebug>
+
+myClass::myClass(QObject *parent) : QObject(parent)
+{
+}
+
+void myClass::onButtonClicked()
+{
+    qDebug() << "Button was clicked!";
+}
+-----------------------------------------
+
+2. Rejestrujemy qml Type w main.cpp
+qmlRegisterType<@1>("@2",1,0,"@3");
+Legenda:
+@1 - Nazwa naszej klasy
+@2 - Przestrzeń nazwy (taka jakby biblioteka)
+@3 - Nazwa naszej klasy używana w qml (Frontend) MUSI BYĆ ZAWSZE Z WIELKIEJ LITERY
+Przykładowo:
+qmlRegisterType<myClass>("Xd",1,0,"Xdd");
+
+3. Edycja funkcji we Frontendzie
+W pliku qml tam gdzie jest przycisk importujemy naszą przestrzeń nazw zgodnie z wcześniejszym krokiem
+Przykład:
+import Xd 1.0
+
+Potem tworzymy instancję klasy
+Przykład:
+Xdd {
+        id: class1
+    }
+
+4. Dodajemy funkcję do przycisku
+Przykład:
+Button {
+            id: button
+            x: 904
+            y: 396
+            text: qsTr("przycisk")
+            onClicked: {
+                class1.onButtonClicked()
+            }
+        }
