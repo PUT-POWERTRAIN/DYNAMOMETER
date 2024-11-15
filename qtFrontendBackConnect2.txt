@@ -1,0 +1,83 @@
+Drugi sposób łączenia. Wtedy wszystkie funkcje wywołane z qmla oddziałują na tą samą klasę (np. ja tego użyłem do stworzenia szachownicy w klonie chess.com na studia)
+
+1. Tworzenie klasy:
+w qt creator stworzyć klasę cpp, która będzie obsługiwała sygnał
+przykład: 
+-----------------------------------------
+myClass.h
+
+#ifndef MYCLASS_H
+#define MYCLASS_H
+
+#include <QObject>
+
+class myClass : public QObject
+{
+    Q_OBJECT
+public:
+    explicit myClass(QObject *parent = nullptr);
+
+public slots:
+    void onButtonClicked();
+signal:
+    void mySingnal();
+};
+
+#endif // MYCLASS_H
+-----------------------------------------
+myClass.cpp
+
+#include "myClass.h"
+#include <QDebug>
+
+myClass::myClass(QObject *parent) : QObject(parent)
+{
+}
+
+void myClass::onButtonClicked()
+{
+    qDebug() << "Button was clicked!";
+}
+
+void mySignal(){
+}
+-----------------------------------------
+
+2. W pliku main.cpp (już po utworzeniu obiektu engine) tworzymy naszą klasę i dodajemy to "contextu".
+Nadajemy jej wtedy nazwę której będziemy używać w qml i wsadzamy reference do niej np.
+
+    QQmlApplicationEngine engine;
+    const QUrl url(mainQmlFile);
+    QObject::connect(
+        &engine, &QQmlApplicationEngine::objectCreated, &app,
+        [url](QObject *obj, const QUrl &objUrl) {
+            if (!obj && url == objUrl)
+                QCoreApplication::exit(-1);
+        }, Qt::QueuedConnection);
+
+
+    class1 myClass;
+    engine.rootContext()->setContextProperty("myClassObj", &class1);
+-----------------------------------------
+
+3. Dodajemy funkcję do przycisku. Żeby można było ją wywołać w taki sposób funckja musi być slotem.
+Przykład:
+Button {
+            id: button
+            x: 904
+            y: 396
+            text: qsTr("przycisk")
+            onClicked: {
+                myClassObj.onButtonClicked()
+            }
+        }
+-----------------------------------------
+
+4. Jeśli nasza klasa ma jakiś signal, można go obsłużyć używając w qml-u obiektu Connections. Np:
+
+Connections{
+	target: myClassObj
+	function mySingal(){
+		//do something
+	}
+}
